@@ -1,0 +1,15 @@
+mqtt:
+  broker: "localhost"    # MQTT broker address
+  port: 1883            # MQTT broker port
+  username: ""          # Optional: MQTT username
+  password: ""          # Optional: MQTT password
+
+http:
+  host: "0.0.0.0"      # Listen on all interfaces
+  port: 8080           # HTTP port to listen on
+
+logging:
+  enabled: false       # Enable/disable logging
+  path: "/var/log/http_to_mqtt.log"  # Log file path
+  max_size: 100000    # Max log file size in bytes
+  backup_count: 3     # Number of backup files to keep

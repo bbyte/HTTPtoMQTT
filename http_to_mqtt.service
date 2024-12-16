@@ -1,0 +1,16 @@
+[Unit]
+Description=HTTP to MQTT Bridge Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/http_to_mqtt
+Environment=PATH=/opt/http_to_mqtt/venv/bin
+Environment=HTTP_TO_MQTT_CONFIG=/etc/http_to_mqtt/config.yaml
+ExecStart=/opt/http_to_mqtt/venv/bin/python run.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
