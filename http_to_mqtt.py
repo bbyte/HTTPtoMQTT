@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-from flask import Flask
+from flask import Flask, request
 import paho.mqtt.client as mqtt
 import yaml
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 import sys
+import json
 
 # Setup logging
 def setup_logging(config):
@@ -106,17 +107,44 @@ def setup_mqtt(config):
 # Setup MQTT client
 mqtt_client = setup_mqtt(config)
 
-@app.route('/<path:topic>')
+@app.route('/<path:topic>', methods=['GET', 'POST'])
 def forward_to_mqtt(topic):
     try:
         # Use the URL path directly as MQTT topic
         mqtt_topic = topic
         
-        # Publish to MQTT
-        mqtt_client.publish(mqtt_topic, "1", qos=1)
-        logger.info(f"Published message to topic: {mqtt_topic}")
+        # Prepare payload from different sources
+        payload = {}
         
-        return {"status": "success", "topic": mqtt_topic}, 200
+        # Add query parameters if any
+        if request.args:
+            payload.update(request.args.to_dict())
+        
+        # Add JSON body if present
+        if request.is_json:
+            payload.update(request.get_json())
+        # Add form data if present
+        elif request.form:
+            payload.update(request.form.to_dict())
+        # Add raw data if present
+        elif request.data:
+            try:
+                payload.update(json.loads(request.data))
+            except json.JSONDecodeError:
+                payload['data'] = request.data.decode('utf-8')
+        
+        # If no payload was found, set a default value
+        if not payload:
+            payload = {"state": "triggered", "timestamp": request.timestamp}
+        
+        # Convert payload to JSON string
+        mqtt_payload = json.dumps(payload)
+        
+        # Publish to MQTT
+        mqtt_client.publish(mqtt_topic, mqtt_payload, qos=1)
+        logger.info(f"Published message to topic: {mqtt_topic}, payload: {mqtt_payload}")
+        
+        return {"status": "success", "topic": mqtt_topic, "payload": payload}, 200
     except Exception as e:
         logger.error(f"Error publishing message: {str(e)}")
         return {"status": "error", "message": str(e)}, 500

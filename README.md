@@ -140,18 +140,51 @@ logging:
 
 ## Usage
 
-The service converts HTTP GET requests to MQTT messages. The URL path is converted to an MQTT topic by replacing slashes with dots.
+The service accepts both GET and POST requests and forwards them to MQTT topics. The payload can be provided in several ways:
 
-Examples:
-- `http://your-server:8080/home/temperature` → MQTT topic: `home.temperature`
-- `http://your-server:8080/sensors/living-room/humidity` → MQTT topic: `sensors.living-room.humidity`
+1. Query Parameters:
+   ```bash
+   # Will publish {"state": "open"} to topic "shelly/door/sensor1"
+   curl "http://your-server:8080/shelly/door/sensor1?state=open"
+   ```
 
-For Shelly Door sensors:
-- HTTP URL: `http://your-server:8080/shelly/door/sensor1/state`
-- Resulting MQTT topic: `shelly.door.sensor1.state`
+2. JSON Body (POST):
+   ```bash
+   # Will publish {"state": "closed", "battery": 92} to topic "shelly/door/sensor1"
+   curl -X POST -H "Content-Type: application/json" \
+        -d '{"state": "closed", "battery": 92}' \
+        http://your-server:8080/shelly/door/sensor1
+   ```
+
+3. Form Data (POST):
+   ```bash
+   # Will publish {"state": "open", "battery": "95"} to topic "shelly/door/sensor1"
+   curl -X POST \
+        -d "state=open" -d "battery=95" \
+        http://your-server:8080/shelly/door/sensor1
+   ```
+
+If no payload is provided, a default payload will be sent:
+```json
+{
+    "state": "triggered",
+    "timestamp": "<request_timestamp>"
+}
+```
+
+### Shelly Door Sensor Example
+
+When configuring a Shelly Door sensor:
+1. Go to the sensor's web interface
+2. Navigate to "Internet & Security → Actions"
+3. Set up the URL with your desired state information:
+   ```
+   http://your-server:8080/shelly/door/sensor1?state=open
+   ```
+   This will publish `{"state": "open"}` to MQTT topic `shelly/door/sensor1`
 
 You can then subscribe to these topics in your MQTT client:
-- Specific sensor: `shelly/door/sensor1/#`
+- Specific sensor: `shelly/door/sensor1`
 - All door sensors: `shelly/door/#`
 - All Shelly devices: `shelly/#`
 
