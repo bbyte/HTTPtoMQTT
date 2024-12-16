@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 import json
+from datetime import datetime
 
 # Setup logging
 def setup_logging(config):
@@ -135,7 +136,10 @@ def forward_to_mqtt(topic):
         
         # If no payload was found, set a default value
         if not payload:
-            payload = {"state": "triggered", "timestamp": request.timestamp}
+            payload = {
+                "state": "triggered",
+                "timestamp": datetime.now().isoformat()
+            }
         
         # Convert payload to JSON string
         mqtt_payload = json.dumps(payload)
