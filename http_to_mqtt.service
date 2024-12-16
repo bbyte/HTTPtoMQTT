@@ -4,13 +4,22 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=http_mqtt
+Group=http_mqtt
 WorkingDirectory=/opt/http_to_mqtt
 Environment=PATH=/opt/http_to_mqtt/venv/bin
 Environment=HTTP_TO_MQTT_CONFIG=/etc/http_to_mqtt/config.yaml
 ExecStart=/opt/http_to_mqtt/venv/bin/python run.py
 Restart=always
 RestartSec=10
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/log/http_to_mqtt
 
 [Install]
 WantedBy=multi-user.target

@@ -41,49 +41,57 @@ This way, your MQTT-based automation system can subscribe to these topics and re
 
 ## Installation
 
-1. Create the installation directory and copy files:
+1. Create system user and directories:
    ```bash
-   # Create directory
-   sudo mkdir -p /opt/http_to_mqtt
-   
+   # Create system user
+   sudo useradd -r -s /bin/false http_mqtt
+
+   # Create directories
+   sudo mkdir -p /opt/http_to_mqtt /etc/http_to_mqtt /var/log/http_to_mqtt
+
+   # Set ownership
+   sudo chown -R http_mqtt:http_mqtt /opt/http_to_mqtt /var/log/http_to_mqtt
+   sudo chown -R http_mqtt:http_mqtt /etc/http_to_mqtt
+   ```
+
+2. Copy project files and set permissions:
+   ```bash
    # Copy project files
    sudo cp -r * /opt/http_to_mqtt/
    
    # Create virtual environment
-   cd /opt/http_to_mqtt
-   sudo python3 -m venv venv
+   sudo -u http_mqtt python3 -m venv /opt/http_to_mqtt/venv
    
-   # Install dependencies in virtual environment
-   sudo ./venv/bin/pip install -r requirements.txt
+   # Install dependencies
+   sudo -u http_mqtt /opt/http_to_mqtt/venv/bin/pip install -r /opt/http_to_mqtt/requirements.txt
    ```
 
-2. Configure the service:
+3. Configure the service:
    ```bash
-   # Create configuration directory
-   sudo mkdir -p /etc/http_to_mqtt
-
    # Copy and edit configuration file
    sudo cp config.example.yaml /etc/http_to_mqtt/config.yaml
+   sudo chown http_mqtt:http_mqtt /etc/http_to_mqtt/config.yaml
+   sudo chmod 640 /etc/http_to_mqtt/config.yaml  # Readable only by user and group
    sudo nano /etc/http_to_mqtt/config.yaml
    ```
 
-3. Install and start the service:
+4. Install and start the service:
    ```bash
    # Copy service file
    sudo cp http_to_mqtt.service /etc/systemd/system/
-
+   
    # Reload systemd, enable and start service
    sudo systemctl daemon-reload
    sudo systemctl enable http_to_mqtt
    sudo systemctl start http_to_mqtt
    ```
 
-4. Check service status:
+5. Check service status:
    ```bash
    sudo systemctl status http_to_mqtt
    ```
 
-5. View logs:
+6. View logs:
    ```bash
    # If logging is enabled in config.yaml
    sudo tail -f /var/log/http_to_mqtt.log
@@ -91,6 +99,16 @@ This way, your MQTT-based automation system can subscribe to these topics and re
    # Or view systemd logs
    sudo journalctl -u http_to_mqtt -f
    ```
+
+### Security Notes
+
+The service runs with minimal privileges:
+- Uses dedicated system user `http_mqtt` without shell access
+- No access to user home directories
+- No ability to gain new privileges
+- Read-only access to system files
+- Write access only to its log directory
+- Private /tmp and devices
 
 ## Configuration
 
